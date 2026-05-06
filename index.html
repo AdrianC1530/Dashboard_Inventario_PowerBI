@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Inventario de Repuestos | Power BI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo:    #E63946;
+    --azul:    #1D3557;
+    --azul2:   #457B9D;
+    --crema:   #F1FAEE;
+    --gris:    #A8DADC;
+    --blanco:  #FFFFFF;
+    --negro:   #0D0D0D;
+    --sombra:  0 4px 24px rgba(0,0,0,.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--crema);
+    color: var(--negro);
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ─────────────────────────────────── */
+  .hero {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 520px; height: 520px;
+    background: var(--rojo);
+    border-radius: 50%;
+    opacity: .08;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -80px;
+    width: 360px; height: 360px;
+    background: var(--gris);
+    border-radius: 50%;
+    opacity: .1;
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 60px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    position: relative; z-index: 2;
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: .08em;
+    color: var(--gris);
+  }
+  .nav-badge {
+    background: var(--rojo);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .hero-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px 60px;
+    position: relative; z-index: 2;
+    max-width: 900px;
+  }
+  .hero-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--gris);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp .6s ease .2s forwards;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 9vw, 8rem);
+    line-height: .95;
+    letter-spacing: .02em;
+    color: var(--blanco);
+    opacity: 0;
+    animation: fadeUp .7s ease .35s forwards;
+  }
+  .hero-title span { color: var(--rojo); }
+
+  .hero-desc {
+    margin-top: 32px;
+    font-size: 1.1rem;
+    line-height: 1.75;
+    color: rgba(255,255,255,.72);
+    max-width: 560px;
+    opacity: 0;
+    animation: fadeUp .7s ease .5s forwards;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 40px;
+    padding: 32px 60px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    position: relative; z-index: 2;
+    flex-wrap: wrap;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--gris);
+  }
+  .meta-value { font-size: 1rem; font-weight: 600; color: var(--blanco); }
+
+  /* ── SECCIONES ────────────────────────────── */
+  section { padding: 80px 60px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--azul2);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--azul);
+    letter-spacing: .04em;
+    margin-bottom: 32px;
+    line-height: 1;
+  }
+
+  /* ── CASO / DESCRIPCIÓN ───────────────────── */
+  .caso { background: var(--blanco); }
+  .caso-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .caso-texto p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 16px;
+  }
+  .caso-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--azul);
+    color: var(--blanco);
+    border-radius: 12px;
+    padding: 28px 24px;
+  }
+  .stat-card.accent { background: var(--rojo); }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    line-height: 1;
+    letter-spacing: .02em;
+  }
+  .stat-desc { font-size: .82rem; opacity: .75; margin-top: 6px; font-weight: 500; }
+
+  /* ── TARJETAS KPI ─────────────────────────── */
+  .kpis { background: var(--crema); }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 48px;
+  }
+  .kpi-card {
+    background: var(--blanco);
+    border-radius: 14px;
+    padding: 28px 24px;
+    box-shadow: var(--sombra);
+    border-top: 4px solid var(--azul2);
+    transition: transform .2s;
+  }
+  .kpi-card:hover { transform: translateY(-4px); }
+  .kpi-card.red { border-top-color: var(--rojo); }
+  .kpi-valor {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    color: var(--azul);
+    letter-spacing: .02em;
+  }
+  .kpi-card.red .kpi-valor { color: var(--rojo); }
+  .kpi-nombre { font-size: .85rem; color: #666; margin-top: 6px; font-weight: 500; }
+
+  /* ── DASHBOARD IMG ────────────────────────── */
+  .dashboard-section { background: var(--azul); }
+  .dashboard-section .section-title { color: var(--blanco); }
+  .dashboard-section .section-label { color: var(--gris); }
+  .img-placeholder {
+    width: 100%;
+    background: rgba(255,255,255,.05);
+    border: 2px dashed rgba(255,255,255,.2);
+    border-radius: 16px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: rgba(255,255,255,.4);
+    font-family: 'DM Mono', monospace;
+    font-size: .85rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 40px;
+    text-align: center;
+  }
+  .img-placeholder svg { opacity: .3; }
+  /* Si el alumno pone una imagen real: */
+  .img-placeholder img { width: 100%; border-radius: 12px; display: block; }
+
+  /* ── VISUALIZACIONES ──────────────────────── */
+  .viz-section { background: var(--blanco); }
+  .viz-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .viz-card {
+    border: 1px solid #e8e8e8;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .viz-card:hover { box-shadow: var(--sombra); }
+  .viz-header {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .viz-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--rojo);
+    line-height: 1;
+    min-width: 32px;
+  }
+  .viz-title { font-weight: 600; font-size: 1rem; }
+  .viz-type { font-size: .75rem; opacity: .6; margin-top: 2px; }
+  .viz-body { padding: 24px; }
+  .viz-img-box {
+    background: #f7f7f7;
+    border-radius: 8px;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px dashed #ddd;
+    color: #bbb;
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .viz-img-box img { width: 100%; display: block; }
+  .viz-explanation { font-size: .92rem; line-height: 1.7; color: #555; }
+
+  /* ── INTERPRETACIÓN ───────────────────────── */
+  .interp-section { background: var(--crema); }
+  .interp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  .interp-card {
+    background: var(--blanco);
+    border-radius: 14px;
+    padding: 28px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .interp-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  .interp-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 10px;
+  }
+  .interp-card p { font-size: .9rem; line-height: 1.7; color: #555; }
+
+  /* ── CONCLUSIÓN ───────────────────────────── */
+  .conclusion {
+    background: var(--negro);
+    color: var(--blanco);
+  }
+  .conclusion .section-title { color: var(--blanco); }
+  .conclusion .section-label { color: var(--rojo); }
+  .conclusion-inner {
+    max-width: 720px;
+  }
+  .conclusion-inner p {
+    font-size: 1.1rem;
+    line-height: 1.85;
+    color: rgba(255,255,255,.72);
+    margin-bottom: 16px;
+  }
+  .conclusion-inner strong { color: var(--gris); }
+
+  /* ── FOOTER ───────────────────────────────── */
+  footer {
+    background: var(--azul);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 28px 60px;
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMACIONES ──────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ───────────────────────────── */
+  @media (max-width: 900px) {
+    nav, section, .hero-body, .hero-meta { padding-left: 24px; padding-right: 24px; }
+    .caso-grid, .viz-grid, .interp-grid, .kpi-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ HERO ══════════ -->
+<header class="hero">
+  <nav>
+    <span class="nav-logo">AutoRepuestos BI</span>
+    <span class="nav-badge">Power BI · Tópicos BD</span>
+  </nav>
+
+  <div class="hero-body">
+    <p class="hero-tag">// Proyecto de análisis de datos</p>
+    <h1 class="hero-title">Sistema de<br><span>Inventario</span><br>de Repuestos</h1>
+    <p class="hero-desc">
+      Dashboard interactivo desarrollado en Power BI para analizar ventas, stock,
+      clientes e inventario de una comercial de repuestos de automóviles.
+      Aplicando conceptos de modelado, Power Query y DAX.
+    </p>
+  </div>
+
+  <div class="hero-meta">
+    <div class="meta-item">
+      <span class="meta-label">Estudiante</span>
+      <!-- ✏️ REEMPLAZA CON TU NOMBRE -->
+      <span class="meta-value">Adrian Carrillo</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Asignatura</span>
+      <span class="meta-value">Tópicos de Base de Datos</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Herramienta</span>
+      <span class="meta-value">Power BI Desktop</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Fecha</span>
+      <span class="meta-value">Mayo 2026</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ DESCRIPCIÓN DEL CASO ══════════ -->
+<section class="caso">
+  <p class="section-label">// 01 — Caso práctico</p>
+  <h2 class="section-title">Descripción del Proyecto</h2>
+  <div class="caso-grid">
+    <div class="caso-texto">
+      <p>
+        Una comercial de repuestos de automóviles requiere analizar el rendimiento
+        de su inventario, ventas y base de clientes a nivel nacional. La empresa
+        opera desde 5 sedes (Quito Norte, Quito Sur, Guayaquil, Cuenca e Ibarra)
+        y distribuye más de 500 referencias de repuestos a talleres mecánicos,
+        concesionarias y distribuidores.
+      </p>
+      <p>
+        El proyecto importa y transforma cuatro tablas de datos en Power Query,
+        construye un modelo relacional y genera medidas DAX para visualizar
+        indicadores clave de negocio en un dashboard interactivo.
+      </p>
+      <p>
+        Los datos cubren ventas de 2023 y 2024, permitiendo análisis temporal,
+        comparación entre sedes, comportamiento por categoría de repuesto
+        y seguimiento del crédito de clientes.
+      </p>
+    </div>
+    <div class="caso-stats">
+      <div class="stat-card">
+        <div class="stat-num">500</div>
+        <div class="stat-desc">Referencias de repuestos en catálogo</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-num">600</div>
+        <div class="stat-desc">Transacciones de venta analizadas</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-num">200</div>
+        <div class="stat-desc">Clientes activos registrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">1 792</div>
+        <div class="stat-desc">Líneas de detalle de venta</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ KPIs ══════════ -->
+<section class="kpis">
+  <p class="section-label">// 02 — Indicadores clave (DAX)</p>
+  <h2 class="section-title">Medidas Principales</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-valor">$793,81K</div>
+      <div class="kpi-nombre">Total Ventas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-valor">$1,32K</div>
+      <div class="kpi-nombre">Promedio por Venta</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-valor">$103,54K</div>
+      <div class="kpi-nombre">Total IVA Recaudado</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-valor">10 000</div>
+      <div class="kpi-nombre">Unidades Vendidas</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<section class="dashboard-section">
+  <p class="section-label">// 03 — Resultado visual</p>
+  <h2 class="section-title">Dashboard Power BI</h2>
+
+  <!-- ✏️ REEMPLAZA el bloque .img-placeholder por:
+       <img src="tu_captura.png" style="width:100%;border-radius:16px;">
+  -->
+  <div class="img-placeholder">
+    <img src="Imagen1.png" style="width:100%;border-radius:16px;">
+  </div>
+</section>
+
+<!-- ══════════ VISUALIZACIONES ══════════ -->
+<section class="viz-section">
+  <p class="section-label">// 04 — Gráficos del dashboard</p>
+  <h2 class="section-title">Las 4 Visualizaciones</h2>
+  <div class="viz-grid">
+
+    <!-- Gráfico 1 -->
+    <div class="viz-card">
+      <div class="viz-header">
+        <span class="viz-num">01</span>
+        <div>
+          <div class="viz-title">Promedio de Venta por Mes y Año</div>
+          <div class="viz-type">Gráfico de líneas</div>
+        </div>
+      </div>
+      <div class="viz-body">
+        <div class="viz-img-box">
+          <img src="Imagen2.png" style="width:100%;border-radius:16px;">
+        </div>
+        <p class="viz-explanation">
+          Muestra la evolución mensual del promedio de venta separado por año (2023 y 2024).
+          Permite identificar estacionalidad y comparar el rendimiento entre períodos.
+          Los picos indican meses de mayor actividad comercial.
+        </p>
+      </div>
+    </div>
+
+    <!-- Gráfico 2 -->
+    <div class="viz-card">
+      <div class="viz-header">
+        <span class="viz-num">02</span>
+        <div>
+          <div class="viz-title">Total Ventas por Tipo de Envío</div>
+          <div class="viz-type">Gráfico circular (pastel)</div>
+        </div>
+      </div>
+      <div class="viz-body">
+        <div class="viz-img-box">
+          <img src="Imagen3.png" style="width:100%;border-radius:16px;">
+        </div>
+        <p class="viz-explanation">
+          Distribuye el total de ventas según el tipo de envío: Programado, Inmediato,
+          Envío Express y Envío Estándar. Los cuatro tipos tienen participaciones
+          similares (~25% cada uno), lo que indica una demanda equilibrada.
+        </p>
+      </div>
+    </div>
+
+    <!-- Gráfico 3 -->
+    <div class="viz-card">
+      <div class="viz-header">
+        <span class="viz-num">03</span>
+        <div>
+          <div class="viz-title">Total IVA por Sede y Estado de Venta</div>
+          <div class="viz-type">Gráfico de barras apiladas</div>
+        </div>
+      </div>
+      <div class="viz-body">
+        <div class="viz-img-box">
+          <img src="Imagen4.png" style="width:100%;border-radius:16px;">
+        </div>
+        <p class="viz-explanation">
+          Compara el IVA generado por cada sede desglosado por estado de venta
+          (Completada, Anulada, En proceso, Pendiente). Sede Quito Sur lidera
+          en IVA total, con predominio de ventas completadas.
+        </p>
+      </div>
+    </div>
+
+    <!-- Gráfico 4 -->
+    <div class="viz-card">
+      <div class="viz-header">
+        <span class="viz-num">04</span>
+        <div>
+          <div class="viz-title">Total Ventas por Categoría de Repuesto</div>
+          <div class="viz-type">Gráfico de barras horizontales</div>
+        </div>
+      </div>
+      <div class="viz-body">
+        <div class="viz-img-box">
+          <img src="Imagen5.png" style="width:100%;border-radius:16px;">
+        </div>
+        <p class="viz-explanation">
+          Presenta el volumen de ventas por categoría de repuesto: Motor, Frenos,
+          Suspensión, Eléctrico, etc. Permite identificar qué líneas de producto
+          generan mayor ingreso y priorizar el reabastecimiento de inventario.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════ INTERPRETACIÓN ══════════ -->
+<section class="interp-section">
+  <p class="section-label">// 05 — Análisis de resultados</p>
+  <h2 class="section-title">Interpretación</h2>
+  <div class="interp-grid">
+    <div class="interp-card">
+      <div class="interp-icon">📦</div>
+      <h3>Inventario y Categorías</h3>
+      <p>
+        Las categorías de Motor y Frenos concentran el mayor volumen de ventas,
+        lo que refleja la alta rotación de repuestos de mantenimiento preventivo.
+        El stock mínimo debe monitorearse especialmente en estas líneas.
+      </p>
+    </div>
+    <div class="interp-card">
+      <div class="interp-icon">🏢</div>
+      <h3>Desempeño por Sede</h3>
+      <p>
+        Sede Quito Sur y Guayaquil generan el mayor IVA acumulado, indicando
+        mayor actividad comercial. Sede Cuenca presenta el menor volumen,
+        lo que sugiere oportunidades de crecimiento en esa región.
+      </p>
+    </div>
+    <div class="interp-card">
+      <div class="interp-icon">📈</div>
+      <h3>Tendencia Temporal</h3>
+      <p>
+        El promedio de venta de 2023 supera al de 2024 en varios meses,
+        aunque 2024 muestra mayor estabilidad. Los meses de enero y abril
+        registran los promedios más altos en ambos años.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CONCLUSIÓN ══════════ -->
+<section class="conclusion">
+  <p class="section-label">// 06 — Conclusión</p>
+  <h2 class="section-title">Conclusión</h2>
+  <div class="conclusion-inner">
+    <p>
+      El desarrollo de este dashboard permitió aplicar de manera integral las
+      herramientas de <strong>Power BI</strong>: importación desde Excel,
+      transformación con <strong>Power Query</strong>, modelado relacional
+      entre cuatro tablas y creación de medidas con <strong>DAX</strong>.
+    </p>
+    <p>
+      El resultado es un panel interactivo que permite a la comercial tomar
+      decisiones basadas en datos: identificar las categorías de repuestos
+      más rentables, monitorear el desempeño por sede, analizar el
+      comportamiento de clientes y controlar el flujo de ventas en el tiempo.
+    </p>
+    <p>
+      Este proyecto demostró que el análisis de datos con Power BI es una
+      herramienta poderosa para transformar datos crudos en información
+      estratégica, aplicable directamente en entornos empresariales reales.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  Tópicos de Base de Datos · Power BI · <!-- ✏️ Tu Nombre --> · 2026
+</footer>
+
+</body>
+</html>
